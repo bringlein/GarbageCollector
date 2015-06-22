@@ -17,18 +17,18 @@ Because *GarbageCollector* is multithreaded, he is **faster than other** popular
 ## Authors: 
 ###Team: The Dumpster Divers 
 
-Lukas Dresel 
-Julius Lohmann
-[Benedikt Lorch](https://github.com/btlorch)
-[Burkhard Ringlein](https://github.com/cliffTifflor)
-Andreas Rupp
-Yuriy Sulima 
-Carola Touchy
+- Lukas Dresel 
+- Julius Lohmann
+- [Benedikt Lorch](https://github.com/btlorch)
+- [Burkhard Ringlein](https://github.com/cliffTifflor)
+- Andreas Rupp
+- Yuriy Sulima 
+- Carola Touchy
 
 
 ## Usage 
 
-'./GarbageCollector path/to/image path/to/output_destination  [-N] [-T]'
+`./GarbageCollector path/to/image path/to/output_destination  [-N] [-T]`
 
 -N: inserts the namme of the Image in the name of the output directory
 
@@ -37,10 +37,9 @@ Carola Touchy
 
 ## License 
 
-Copyright (c) 2015. Lukas Dresel, Julius Lohmann, Benedikt Lorch, Burkhard Ringlein, Andreas Rupp, Yuriy Sulima, Carola Touchy
+	Copyright (c) 2015. Lukas Dresel, Julius Lohmann, Benedikt Lorch, Burkhard Ringlein, Andreas Rupp, Yuriy Sulima, Carola Touchy
 
-
-	*GarbageCollector* is free software: you can redistribute it and/or modify
+	GarbageCollector is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
@@ -56,10 +55,11 @@ Copyright (c) 2015. Lukas Dresel, Julius Lohmann, Benedikt Lorch, Burkhard Ringl
 
 ## Installation 
 
-Simply: 
-'git clone git@github.com:cliffTifflor/GarbageCollector.git GarbageCollector 
+Simply:
+
+`git clone git@github.com:cliffTifflor/GarbageCollector.git GarbageCollector 
  cd GarbageCollector
- make '
+ make `
 
 Of course you need the build essentials of your system (C++, GNU Make, g++, etc.). 
 
