@@ -57,9 +57,9 @@ Because *GarbageCollector* is multithreaded, he is **faster than other** popular
 
 Simply:
 
-`git clone git@github.com:cliffTifflor/GarbageCollector.git GarbageCollector `
-`cd GarbageCollector`
-`make `
+	git clone git@github.com:cliffTifflor/GarbageCollector.git GarbageCollector 
+	cd GarbageCollector
+	make 
 
 Of course you need the build essentials of your system (C++, GNU Make, g++, etc.). 
 
