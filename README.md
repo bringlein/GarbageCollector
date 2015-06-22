@@ -4,13 +4,13 @@
 
 ## Features 
 
-Currently *GarbageCollector* can scan disc images as well as devices for the following formats:
+Currently *GarbageCollector* can scan disc images as well as devices for files of the following types:
 * pdf
 * jpg 
 * png 
 
 It can recover - unlike other popular file carvers e.g. foremost - **files of any size**. 
-*GarbageCollector* is still a file carver, thus only non-fragmented files can be detected based on format-specific headers and footers regardless of the underlying file system. 
+*GarbageCollector* is still a file carver, thus only non-fragmented files can be recovered. Detection is based on format-specific headers and footers regardless of the underlying file system. 
 As *GarbageCollector* supports multithreading by design, it is **faster than other** popular file carving tools, too. 
 
 
@@ -30,7 +30,7 @@ As *GarbageCollector* supports multithreading by design, it is **faster than oth
 
 `./GarbageCollector path/to/image path/to/output_destination  [-N] [-T]`
 
--N: incorporates the name of the carved image or device in the name of the output directory
+-N: inserts the name of the carved image or device in the name of the output directory
 
 -T: inserts a timestamp in the name of the output directory 
 
