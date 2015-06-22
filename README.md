@@ -14,6 +14,10 @@ It can recover - unlike other popular file carvers e.g. foremost - **files of an
 As *GarbageCollector* supports multithreading by design, it is **faster than other** popular file carving tools, too. 
 
 
+## Module structure
+![Module structure](https://raw.github.com/btlorch/GarbageCollector/master/structure.png)
+
+
 ## Authors: 
 ###Team: The Dumpster Divers 
 
