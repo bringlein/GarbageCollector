@@ -58,10 +58,17 @@ Because *GarbageCollector* is multithreaded, he is **faster than other** popular
 Simply:
 
 	git clone git@github.com:cliffTifflor/GarbageCollector.git GarbageCollector 
+
+Or go to the [Realease-Page](https://github.com/cliffTifflor/GarbageCollector/releases) and download the latest zip. 
+Then: 
+
 	cd GarbageCollector
 	make 
 
+
+
 Of course you need the build essentials of your system (C++, GNU Make, g++, etc.). 
+
 
 
 
