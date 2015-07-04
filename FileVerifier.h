@@ -38,7 +38,7 @@ class FileVerifier
 	 *	startOffset	-	This is the offset where the header found by our search algorithm was found
 	 *	length		-	The number of bytes to consider, including the footer.
 	 *	myImageFile	-	The FILE pointer to use for reading the image file.
-	 *	@return		-	returns the number of bytes the file actually occupies. This can at most be length. On Error 0 will be returned;
+	 *	@return		-	returns the number of bytes the file actually occupies. This number cannot be larger than the given length. On error 0 will be returned;
 	 */
         virtual uint64_t getValidFileLength(uint64_t startOffset, uint64_t length, FILE* myImageFile) = 0;
 };

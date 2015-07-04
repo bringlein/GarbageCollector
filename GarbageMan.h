@@ -37,7 +37,7 @@
 #include "jbuffer.h"
 #include "VerificationJob.h"
 
-enum PatternType { pdfHeader, pdfFooter, jpgHeader, pngHeader};
+enum PatternType { pdfHeader, pdfFooter, jpgHeader, pngHeader, sqliteHeader};
 
 inline std::ostream& operator<<(std::ostream& out, const PatternType value) {
 	switch(value) {

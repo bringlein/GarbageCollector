@@ -271,7 +271,8 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	patterns.insert(make_pair(pdfHeader, "%PDF"));	// PDF header
 	patterns.insert(make_pair(pdfFooter, "%EOF"));	// PDF footer
 	patterns.insert(make_pair(jpgHeader, "\xff\xd8\xff"));	// JPG header ff d8 ff
-	patterns.insert(make_pair(pngHeader, "\x89PNG\x0d\x0a\x1a\x0a"));	// PNG header 89 50 4e 47 0d 0a 1a 0a
+	patterns.insert(make_pair(pngHeader, "\x89PNG\x0d\x0a\x1a\x0a"));	// PNG header 89 50 4e 47 0d 0a 1a 0
+	patterns.insert(make_pair(sqliteHeader, "\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x61\x74\x20\x33\x00"));	// SQLite format 3
 	
 	// Resolve path
 	char* realPath = realpath(pathToImg, NULL);
