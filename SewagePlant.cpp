@@ -37,7 +37,8 @@ SewagePlant::SewagePlant(const string pathToOutputFolder, unsigned int initValue
 	this->pathToOutputFolder = pathToOutputFolder;
 	this->pdfCount = initValue;
 	this->pngCount = initValue;
-	this->jpgCount= initValue; 
+	this->jpgCount= initValue;
+	this->sqliteCount = initValue;
 }
 
 SewagePlant::~SewagePlant()
@@ -52,14 +53,21 @@ void SewagePlant::purify(uint64_t startOffset, uint64_t realLength, JobType file
 	switch(fileType)
 	{	
 		case pdf:
-				fileNumber = pdfCount++; 
-				subdir = "pdf" ; break;
+			fileNumber = pdfCount++; 
+			subdir = "pdf";
+			break;
 		case png: 
-				fileNumber = pngCount++; 
-				subdir = "png" ; break;
+			fileNumber = pngCount++; 
+			subdir = "png";
+			break;
 		case jpg: 
-				fileNumber = jpgCount++; 
-				subdir = "jpg" ;break;
+			fileNumber = jpgCount++; 
+			subdir = "jpg";
+			break;
+		case sqlite:
+			fileNumber = sqliteCount++;
+			subdir = "sqlite";
+			break;
 		default:
 				cerr << "printOutput default fail" << endl; 
 	}
@@ -77,7 +85,7 @@ void SewagePlant::purify(uint64_t startOffset, uint64_t realLength, JobType file
 #ifdef DEBUG 
 	cout << "pathToNewFile : " << pathToNewFile.str().c_str() << endl;
 #endif
-	FILE* outputFile=fopen(pathToNewFile.str().c_str(), "w+");
+	FILE* outputFile = fopen(pathToNewFile.str().c_str(), "w+");
 
 	if(outputFile == NULL)
 	{
@@ -140,6 +148,7 @@ void SewagePlant::condense()
 	cout << "\t PDF : " << pdfCount << endl;
 	cout << "\t PNG : " << pngCount << endl;
 	cout << "\t JPG : " << jpgCount << endl;
+	cout << "\t SQLite : " << sqliteCount << endl;
 	cout << "------------------ " << endl; 
 
 }

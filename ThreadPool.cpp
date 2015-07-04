@@ -37,7 +37,8 @@
 #include "SewagePlant.h"
 #include "modules/VerifyJPEG.h"
 #include "modules/VerifyPDF.h"
-#include "modules/VerifyPNG.h"  
+#include "modules/VerifyPNG.h"
+#include "modules/VerifySQLite.h"  
 
 #define THREADNICE -3
 
@@ -83,44 +84,47 @@ void runModules (BNDBUF *jbuf,uint id,char *pathToImage, SewagePlant *swp)
         return; 
     }
 	
-    while (true) 
-    {
-    mj = bbGet(jbuf);
-	VerifyJPEG jpegV;
-	VerifyPDF pdfV;
-	VerifyPNG pngV;
-    uint64_t foundLength = 0; // error: ‘foundLength’ may be used uninitialized in this function [-Werror=maybe-uninitialized]
-	switch(mj->type)
-	{
-		case pdf:
+    while (true) {
+		mj = bbGet(jbuf);
+		VerifyJPEG jpegV;
+		VerifyPDF pdfV;
+		VerifyPNG pngV;
+		VerifySQLite sqliteV;
+		
+		uint64_t foundLength = 0; // error: ‘foundLength’ may be used uninitialized in this function [-Werror=maybe-uninitialized]
+		switch(mj->type) {
+			case pdf:
 				foundLength = pdfV.getValidFileLength(mj->startOffset, mj->length, myImageFile);
-	        break;
-		case jpg:
-            foundLength = jpegV.getValidFileLength(mj->startOffset, mj->length, myImageFile);
-#ifdef DEBUG 
-			cout << "Possible jpeg file at " << showbase << hex << mj->startOffset << " of length " << foundLength << endl;
-#endif
-			break; 
-		case png: 
+				break;
+			case jpg:
+				foundLength = jpegV.getValidFileLength(mj->startOffset, mj->length, myImageFile);
+	#ifdef DEBUG 
+				cout << "Possible jpeg file at " << showbase << hex << mj->startOffset << " of length " << foundLength << endl;
+	#endif
+				break;
+			case png: 
 				foundLength = pngV.getValidFileLength(mj->startOffset, mj->length, myImageFile);
-			break;
-		case poison:
-	        fclose(myImageFile);
-	        free(mj);
-#ifdef DEBUG
-            cout << "PoisonPill recieved. id: " << id << endl;
-#endif
-            return;
-		  
+				break;
+			case sqlite:
+				foundLength = sqliteV.getValidFileLength(mj->startOffset, mj->length, myImageFile);
+				break;
+			case poison:
+				fclose(myImageFile);
+				free(mj);
+	#ifdef DEBUG
+				cout << "PoisonPill recieved. id: " << id << endl;
+	#endif
+				return;
+		}
+		
+		if(foundLength != 0) {
+			//output methode 
+			swp->purify(mj->startOffset, foundLength, mj->type, myImageFile);
+		}
+//		else{
+//			logging 
+//		}
 	}
-	if(foundLength!= 0)
-	{
-		//output methode 
-		swp->purify(mj->startOffset, foundLength, mj->type, myImageFile);
-	} /*else{
-		//logging 
-	}*/
-  }
 }
 
 void runParser (BNDBUF *jbuf, uint id, int numberOfThreads, char *pathToImage) {
@@ -150,19 +154,19 @@ void ThreadPool::start (BNDBUF *jbuf, SewagePlant *swp) {
 	cout << "numberOfThreads: " << numberOfThreads << endl;
 #endif*/
 
-  threads.push_back(thread(runParser,jbuf,0,numberOfThreads,pathToImage));
-  for (int i = 1; i < numberOfThreads; i++) {
-    threads.push_back(thread(runModules,jbuf,i,pathToImage,swp));
-  }
- #ifdef DEBUG
-			cout << "all threads started " << endl;
-		#endif
+	threads.push_back(thread(runParser,jbuf,0,numberOfThreads,pathToImage));
+	for (int i = 1; i < numberOfThreads; i++) {
+		threads.push_back(thread(runModules,jbuf,i,pathToImage,swp));
+	}
+#ifdef DEBUG
+	cout << "all threads started " << endl;
+#endif
 
 }
 
 void ThreadPool::waitForJoin () {
-  for (int i = 0; i < numberOfThreads; i++) {
-    threads[i].join();
-  }
+	for (int i = 0; i < numberOfThreads; i++) {
+		threads[i].join();
+	}
 }
 

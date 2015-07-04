@@ -27,7 +27,7 @@
 
 #include <inttypes.h>
 
-enum JobType {pdf, png, jpg, poison}; 
+enum JobType {pdf, png, jpg, sqlite, poison}; 
 
 struct VerificationJob
 {
