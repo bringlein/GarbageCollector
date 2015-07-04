@@ -83,7 +83,7 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 
 uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t length, FILE* myImageFile)
 {
-	LOG_DEBUG(METHODNAME(getValidFileLength)"Verifying SQLite at 0x%lx of length 0d%ld\n", startOffset, length);
+	LOG_DEBUG(METHODNAME(getValidFileLength)"Verifying SQLite at 0x%lx of length %ld\n", startOffset, length);
 
 	if (length < 100) {
 		// First 100 bytes correspond to header
