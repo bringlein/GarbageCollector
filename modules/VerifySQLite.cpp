@@ -43,7 +43,7 @@ static bool isPowerOfTwo(unsigned int number) {
 
 
 static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& length) {
-	
+
 	if (fseek(myImageFile, startOffset, SEEK_SET) != 0) {
 		return false;
 	}
@@ -53,13 +53,13 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 		perror(METHODNAME(verifyHeader)"fread");
 		return false;
 	}
-	
+
 	// Compare first 16 bytes to magic header string
-	if (0 != strncmp("\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x61\x74\x20\x33\x00", buffer, 16)) {
+	if (0 != strncmp("\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x72\x6d\x61\x74\x20\x33\x00", buffer, 16)) {
 		return false;
 	}
-	
-	unsigned int pageSize = (((unsigned int) buffer[16]) << 4) + (unsigned int) buffer[17];
+
+	unsigned int pageSize = (((unsigned int) buffer[16]) << 8) + (unsigned int) buffer[17];
 	// From version 3.7.1 a page size of 65536 bytes is encoded as magic 1
 	if (1 == pageSize) {
 		pageSize = 65536;
@@ -72,7 +72,7 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 	}
 
 	// The number of pages consists of 4 bytes in big-endian byte order starting at offset 28
-	unsigned int pages = (((unsigned int) buffer[28]) << 12) + (((unsigned int) buffer[29]) << 8) + (((unsigned int) buffer[30]) << 4) + ((unsigned int) buffer[31]);
+	unsigned int pages = (((unsigned int) buffer[28]) << 24) + (((unsigned int) buffer[29]) << 16) + (((unsigned int) buffer[30]) << 8) + ((unsigned int) buffer[31]);
 	// TODO validity check
 
 	length = ((uint64_t) pageSize) * ((uint64_t) pages);
@@ -83,18 +83,19 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 
 uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t length, FILE* myImageFile)
 {
-    LOG_DEBUG(METHODNAME(getValidFileLength)"Verifying SQLite at 0x%lx of length 0d%ld\n", startOffset, length);
-	
+	LOG_DEBUG(METHODNAME(getValidFileLength)"Verifying SQLite at 0x%lx of length 0d%ld\n", startOffset, length);
+
 	if (length < 100) {
 		// First 100 bytes correspond to header
 		return 0;
 	}
-	
+
 	if (!verifyHeader(startOffset, myImageFile, length)) {
+		LOG_DEBUG(METHODNAME(verifyHeader)"failed\n");
 		return 0;
 	}
-	
+
 	// length has been set by verifyHeader method
-    return length;
+	return length;
 }
 

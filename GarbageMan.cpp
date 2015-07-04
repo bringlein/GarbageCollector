@@ -73,9 +73,9 @@ unsigned int GarbageMan::initialHash(const char* const text, uint64_t length) {
 //			#endif
 	}
 	hash = hash % q;
-//	#ifdef DEBUG
-//		printf("[initialHash] %s: %u (0x%X)\n", text, hash, hash);
-//	#endif
+#ifdef DEBUG
+		printf("[initialHash] %s: %u (0x%X)\n", text, hash, hash);
+#endif
 	return hash;
 }
 
@@ -117,6 +117,9 @@ struct VerificationJob* createJob(PatternType patternType, uint64_t startOffset,
 }
 
 
+/**
+ * Get the maximum number of bytes which we can use for the matching. This number equals the number of bytes of the shortest pattern.
+ */
 uint64_t getMaxPatternLength(map<PatternType, const char*> patterns) {
     uint64_t maxPatternLength = 65535;
     for (map<PatternType, const char*>::iterator it = patterns.begin(); it != patterns.end(); it++) {
@@ -135,29 +138,29 @@ uint64_t getMaxPatternLength(map<PatternType, const char*> patterns) {
  * globalLength: size of the complete image
  **/
 uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const char*> patterns, BNDBUF* jbuf, uint64_t fragmentLength, uint64_t fragmentOffset, uint64_t globalLength, uint64_t lastFoundAddressPar) {
-    // Find maximum length of patterns
-    uint64_t patternLength = getMaxPatternLength(patterns);
-    
+	// Find maximum length of patterns
+	uint64_t patternLength = getMaxPatternLength(patterns);
+
 	// Precalculate hashes of patterns and store them in a hashmap
 	multimap<unsigned int, PatternType> patternBins;
 	for (map<PatternType, const char*>::iterator it = patterns.begin(); it != patterns.end(); it++) {
 		unsigned int bin = GarbageMan::initialHash(it->second, patternLength);
 		patternBins.insert(make_pair(bin, it->first));
 	}
-	
+
 	uint64_t lastFoundAddress = lastFoundAddressPar - fragmentOffset; // avoid duplicate jobs when seeking in same address space
 
 	bool init = false;
 	unsigned int hash = 0;
 	pair<multimap<unsigned int, PatternType>::iterator, multimap<unsigned int, PatternType>::iterator> hit;
 	multimap<unsigned int, PatternType>::iterator hitIter;
-	
+
 	// Iterate over each byte (interpreted as character) in the text
 	for (uint64_t pos = 0; pos < fragmentLength - patternLength; pos++) {
 		// Compute the hash depending on the value calculated in the previous iteration
 		if (!init) {
 			hash = GarbageMan::initialHash(text + pos, patternLength);
-            init = true;
+			init = true;
 		} else {
 			hash = rollingHash(hash, text[pos-1], text[pos + patternLength - 1], patternLength);
 //		   #ifdef SPAM
@@ -180,18 +183,18 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 //				printf("[charCompare] %X %X %X\n", (unsigned char) pattern[0], (unsigned char) pattern[1], (unsigned char) pattern[2]);
 //			#endif
 
-//			#ifdef DEBUG
-//				cout << "[GarbageMan] MAYBE Found " << hitIter->second << " at address ";
-//				printf("0x%lx \n", (uint64_t) pos + fragmentOffset); 
-//			#endif
+			#ifdef DEBUG
+				cout << "[GarbageMan] MAYBE Found " << hitIter->second << " at address ";
+				printf("0x%lx \n", (uint64_t) pos + fragmentOffset); 
+			#endif
 
 			// Additionally, patterns can be longer than max pattern length. Thus, we need need to compare the pattern's remaining chars
 			bool match = true;
 			uint64_t actualLength = strlen(pattern);	// watch out for \0 byte!!
 			for (uint64_t i=0; i<actualLength && match; i++) {
-//				#ifdef DEBUG
-//					printf("[charCompare] %X ?= %X\n", (unsigned char) pattern[i], (unsigned char) text[i + pos]);
-//				#endif
+				#ifdef DEBUG
+					printf("[charCompare] %X ?= %X\n", (unsigned char) pattern[i], (unsigned char) text[i + pos]);
+				#endif
 				if (i + pos >= fragmentLength) {
 					match = false;
 				}
@@ -275,7 +278,7 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	patterns.insert(make_pair(pdfFooter, "%EOF"));	// PDF footer
 	patterns.insert(make_pair(jpgHeader, "\xff\xd8\xff"));	// JPG header ff d8 ff
 	patterns.insert(make_pair(pngHeader, "\x89PNG\x0d\x0a\x1a\x0a"));	// PNG header 89 50 4e 47 0d 0a 1a 0
-	patterns.insert(make_pair(sqliteHeader, "\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x61\x74\x20\x33\x00"));	// SQLite format 3
+	patterns.insert(make_pair(sqliteHeader, "\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x72\x6d\x61\x74\x20\x33\x00"));	// SQLite format 3
 	
 	// Resolve path
 	char* realPath = realpath(pathToImg, NULL);
