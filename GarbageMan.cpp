@@ -73,9 +73,9 @@ uint64_t GarbageMan::initialHash(const char* const text, uint64_t length) {
 //			#endif
 	}
 	hash = hash % q;
-#ifdef DEBUG
-	printf("[initialHash] %s: %" PRIu64 " (0x%" PRIx64 ")\n", text, hash, hash);
-#endif
+//#ifdef DEBUG
+//	printf("[initialHash] %s: %" PRIu64 " (0x%" PRIx64 ")\n", text, hash, hash);
+//#endif
 	return hash;
 }
 
