@@ -45,4 +45,5 @@
 #endif
 
 size_t getFilesize(const char* filename);
+uint64_t getFileOrDeviceSize(const char* realPath, int fd);
 bool fread_check_error(const char* descriptor, unsigned char* buf, size_t numBytes, FILE* file);

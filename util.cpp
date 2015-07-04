@@ -23,6 +23,10 @@
 
 
 #include "util.h"
+#include <linux/fs.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 size_t getFilesize(const char* filename) 
 {
@@ -36,6 +40,36 @@ size_t getFilesize(const char* filename)
 	}
     return st.st_size;   
 }
+
+/**
+ * fd is an open file descriptor
+ * returns 0 on error
+ */
+uint64_t getFileOrDeviceSize(const char* realPath, int fd) {
+	const char devSubstr[] = "/dev/";
+	if (strncmp(devSubstr, realPath, strlen(devSubstr)) == 0) {
+		// realPath points to a device
+		unsigned long numBlocks;
+		int ret = ioctl(fd, BLKGETSIZE64, &numBlocks);
+		if (-1 == ret) {
+			std::cerr << "ioctl " << strerror(errno) << std::endl;
+			return 0;
+		}
+		return (uint64_t) numBlocks; // < 9
+	}
+	else {
+		// realPath points to a file
+		struct stat st;
+		int ret = stat(realPath, &st);
+		if(ret == -1) {
+			std::cerr << "getFilesize : " << strerror(errno) << std::endl;
+			return 0;
+		}
+		return (uint64_t) st.st_size; 
+	}
+}
+
+
 
 bool fread_check_error(const char* descriptor, unsigned char* buf, size_t numBytes, FILE* file)
 {

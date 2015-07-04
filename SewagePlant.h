@@ -34,9 +34,10 @@ class SewagePlant {
 private:
 	std::string pathToOutputFolder;
 	std::atomic<unsigned int> pdfCount, pngCount, jpgCount, sqliteCount; 
+	uint64_t imageFileLengt; 
 
 public: 
-	SewagePlant(const std::string pathToOutputFolder, unsigned int initValue);
+	SewagePlant(const std::string pathToOutputFolder, unsigned int initValue, uint64_t imageFileLengt);
 	~SewagePlant();
 	void purify(uint64_t startOffset, uint64_t realLength, JobType fileType, FILE * imageFile);
 	void condense();

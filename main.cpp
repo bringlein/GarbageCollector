@@ -45,8 +45,10 @@
 #include <sstream>
 #include <time.h>
 #include <algorithm>
+#include <limits.h>
 
-//#include "util.h"
+
+#include "util.h"
 
 
 typedef unsigned int uint;
@@ -154,7 +156,35 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	SewagePlant swp(outputDestination.str(), 0);
+
+		// Resolve path
+	char* realPath = realpath(argv[1], NULL);
+	if (NULL == realPath) {
+		perror("realpath");
+		exit(1);
+	}
+
+	int fd = open(realPath, O_RDONLY, 0);
+	if(fd == -1)
+	{
+		cerr << "GarbageMan open failed: " << strerror(errno) << endl;
+		exit(1);
+
+	}
+
+	uint64_t imageSize = getFileOrDeviceSize(realPath, fd);
+	if (0 == imageSize) {
+		cerr << "GarbageMan getFilesize returned 0" << endl;
+		close(fd);
+		exit(1);
+	}
+
+	// We don't need realPath any more
+	free(realPath);
+	close(fd);
+
+
+	SewagePlant swp(outputDestination.str(), 0,imageSize);
 	cout << "Recovered Files are saved in : " << outputDestination.str() << endl;
 
 	//starting ThreadPool

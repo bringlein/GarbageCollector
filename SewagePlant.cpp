@@ -32,13 +32,14 @@ using namespace std;
 
 #define FRAGMENTSIZE (16*1024) 
 
-SewagePlant::SewagePlant(const string pathToOutputFolder, unsigned int initValue)
+SewagePlant::SewagePlant(const string pathToOutputFolder, unsigned int initValue, uint64_t imageFileLengt)
 {
 	this->pathToOutputFolder = pathToOutputFolder;
 	this->pdfCount = initValue;
 	this->pngCount = initValue;
 	this->jpgCount= initValue;
 	this->sqliteCount = initValue;
+	this->imageFileLengt = imageFileLengt;
 }
 
 SewagePlant::~SewagePlant()
@@ -48,6 +49,13 @@ SewagePlant::~SewagePlant()
 
 void SewagePlant::purify(uint64_t startOffset, uint64_t realLength, JobType fileType,  FILE * imageFile)
 {
+
+	if((startOffset+realLength)>=imageFileLengt)
+	{
+		cerr << "file to purify is bigger then the image/disk" << endl;
+		return;
+	}
+
 	unsigned int fileNumber = 0;
 	string subdir = " ";
 	switch(fileType)
@@ -126,12 +134,14 @@ void SewagePlant::purify(uint64_t startOffset, uint64_t realLength, JobType file
 			}else{
 				cerr << "unspecified error in SewagePlant while reading imageFile" << endl;
 			}
+			break; 
 		}
 		
 		size_t written = fwrite(buffer, 1, fragmentlength , outputFile);
 		if(written == 0)
 		{
 			cerr << "unspecified error in SewagePlant while writing outputFile" << endl;
+			break;
 		}
 
 		currentOffset += fragmentlength; 
