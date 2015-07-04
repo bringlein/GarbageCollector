@@ -137,6 +137,8 @@ int main(int argc, char** argv)
 	targetDirectories.push_back("pdf");
 	targetDirectories.push_back("jpg");
 	targetDirectories.push_back("png");
+	targetDirectories.push_back("sqlite");
+
 
 	for(uint i = 0; i< targetDirectories.size(); i++)
 	{
