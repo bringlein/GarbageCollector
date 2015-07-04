@@ -44,7 +44,7 @@
 	#include <inttypes.h>
 #endif
 
-//#include "util.h"
+#include "util.h"
 
 
 #define MAX(a, b) ((a) > (b)) ? (a) : (b)
@@ -252,33 +252,6 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 }
 
 
-/**
- * fd is an open file descriptor
- * returns 0 on error
- */
-uint64_t getFilesize(const char* realPath, int fd) {
-	const char devSubstr[] = "/dev/";
-	if (strncmp(devSubstr, realPath, strlen(devSubstr)) == 0) {
-		// realPath points to a device
-		unsigned long numBlocks;
-		int ret = ioctl(fd, BLKGETSIZE64, &numBlocks);
-		if (-1 == ret) {
-			cerr << "ioctl " << strerror(errno) << endl;
-			return 0;
-		}
-		return (uint64_t) numBlocks; // < 9
-	}
-	else {
-		// realPath points to a file
-		struct stat st;
-		int ret = stat(realPath, &st);
-		if(ret == -1) {
-			std::cerr << "getFilesize : " << strerror(errno) << std::endl;
-			return 0;
-		}
-		return (uint64_t) st.st_size;
-	}
-}
 
 void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	map<PatternType, const char*> patterns;
@@ -302,7 +275,7 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 		return;
 	}
 
-	uint64_t imageSize = getFilesize(realPath, fd);
+	uint64_t imageSize = getFileOrDeviceSize(realPath, fd);
 	if (0 == imageSize) {
 		cerr << "GarbageMan getFilesize returned 0" << endl;
 		close(fd);
