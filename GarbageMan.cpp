@@ -73,22 +73,28 @@ uint64_t GarbageMan::initialHash(const char* const text, uint64_t length) {
 //			#endif
 	}
 	hash = hash % q;
-//#ifdef DEBUG
-//		printf("[initialHash] %s: %u (0x%X)\n", text, hash, hash);
-//#endif
+#ifdef DEBUG
+	printf("[initialHash] %s: %" PRIu64 " (0x%" PRIx64 ")\n", text, hash, hash);
+#endif
 	return hash;
 }
 
 uint64_t GarbageMan::rollingHash(uint64_t previousHash, char kickOut, char next, uint64_t length) {
         // See https://www2.cs.fau.de/teaching/SS2015/HalloWelt/ZK_2015.pdf#24
-        uint64_t dump = (((uint64_t) ((unsigned char) kickOut)) << 8 * (length - 1)) % q;
-//		#ifdef DEBUG
-//			printf("[rollingHash] dump %u (%X)\n", dump, dump);
-//		#endif
-        uint64_t hash = ((previousHash - dump) << 8) + ((uint64_t) ((unsigned char) next));
-//		#ifdef DEBUG
-//			printf("[rollingHash] new hash %u (%X)\n", hash, hash);
-//		#endif
+        uint64_t dump = (((uint64_t) ((unsigned char) kickOut)) << (8 * (length - 1))) % q;
+//#ifdef DEBUG
+//			printf("[rollingHash] dump %" PRIu64 " (0x%" PRIx64 ")\n", dump, dump);
+//#endif
+        uint64_t hash = (previousHash - dump);
+	if (dump > previousHash) {
+		 // correct for overflow if dump was larger than previousHash
+		 hash = hash + q;
+	}
+	hash = (hash << 8) % q;
+	hash = hash + ((uint64_t) ((unsigned char) next));
+//#ifdef DEBUG
+//			printf("[rollingHash] new hash %" PRIu64 " (0x%" PRIx64")\n", hash, hash);
+//#endif
         hash = hash % q;
 	return hash;
 }
@@ -121,11 +127,13 @@ struct VerificationJob* createJob(PatternType patternType, uint64_t startOffset,
  * Get the maximum number of bytes which we can use for the matching. This number equals the number of bytes of the shortest pattern.
  */
 uint64_t getMaxPatternLength(map<PatternType, const char*> patterns) {
-    uint64_t maxPatternLength = 65535;
-    for (map<PatternType, const char*>::iterator it = patterns.begin(); it != patterns.end(); it++) {
-        maxPatternLength = MIN(maxPatternLength, strlen(it->second));
-    }
-    return maxPatternLength;
+	uint64_t maxPatternLength = 65535;
+	for (map<PatternType, const char*>::iterator it = patterns.begin(); it != patterns.end(); it++) {
+		maxPatternLength = MIN(maxPatternLength, strlen(it->second));
+	}
+	// As we're deailing with 64bit integers, we cannot use more than 8 bytes for comparison
+	// It would be even more efficient if we adapted q here
+	return MIN(8, maxPatternLength);
 }
 
 
@@ -163,9 +171,9 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 			init = true;
 		} else {
 			hash = rollingHash(hash, text[pos-1], text[pos + patternLength - 1], patternLength);
-//			#ifdef SPAM
-//				unsigned int validateHash = GarbageMan::initialHash(text + pos, patternLength);
-//				printf("%zx\tInitial hash method: %u (0x%X), Rolling hash method: %u (0x%X)\n", pos, validateHash, validateHash, hash, hash);
+//			#ifdef DEBUG
+//				uint64_t validateHash = GarbageMan::initialHash(text + pos, patternLength);
+//				printf("%zx\tInitial hash method: %" PRIu64 " (0x%" PRIx64 "), Rolling hash method: %" PRIu64" (0x%" PRIx64 ")\n", pos, validateHash, validateHash, hash, hash);
 //				if (validateHash != hash) exit(1);
 //			#endif
 		}
@@ -192,9 +200,9 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 			bool match = true;
 			uint64_t actualLength = strlen(pattern);	// watch out for \0 byte!!
 			for (uint64_t i=0; i<actualLength && match; i++) {
-				#ifdef DEBUG
-					printf("[charCompare] %X ?= %X\n", (unsigned char) pattern[i], (unsigned char) text[i + pos]);
-				#endif
+//				#ifdef DEBUG
+//					printf("[charCompare] %X ?= %X\n", (unsigned char) pattern[i], (unsigned char) text[i + pos]);
+//				#endif
 				if (i + pos >= fragmentLength) {
 					match = false;
 				}
@@ -274,10 +282,10 @@ uint64_t getFilesize(const char* realPath, int fd) {
 
 void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	map<PatternType, const char*> patterns;
-//	patterns.insert(make_pair(pdfHeader, "%PDF"));	// PDF header
-//	patterns.insert(make_pair(pdfFooter, "%EOF"));	// PDF footer
-//	patterns.insert(make_pair(jpgHeader, "\xff\xd8\xff"));	// JPG header ff d8 ff
-//	patterns.insert(make_pair(pngHeader, "\x89PNG\x0d\x0a\x1a\x0a"));	// PNG header 89 50 4e 47 0d 0a 1a 0
+	patterns.insert(make_pair(pdfHeader, "%PDF"));	// PDF header
+	patterns.insert(make_pair(pdfFooter, "%EOF"));	// PDF footer
+	patterns.insert(make_pair(jpgHeader, "\xff\xd8\xff"));	// JPG header ff d8 ff
+	patterns.insert(make_pair(pngHeader, "\x89PNG\x0d\x0a\x1a\x0a"));	// PNG header 89 50 4e 47 0d 0a 1a 0
 	patterns.insert(make_pair(sqliteHeader, "\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x72\x6d\x61\x74\x20\x33\x00"));	// SQLite format 3
 
 	// Resolve path
