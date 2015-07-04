@@ -163,17 +163,17 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 			init = true;
 		} else {
 			hash = rollingHash(hash, text[pos-1], text[pos + patternLength - 1], patternLength);
-//		   #ifdef SPAM
-//					unsigned int validateHash = GarbageMan::initialHash(text + pos, patternLength);
-//					printf("%zx\tInitial hash method: %u (0x%X), Rolling hash method: %u (0x%X)\n", pos, validateHash, validateHash, hash, hash);
-//					if (validateHash != hash) exit(1);
+//			#ifdef SPAM
+//				unsigned int validateHash = GarbageMan::initialHash(text + pos, patternLength);
+//				printf("%zx\tInitial hash method: %u (0x%X), Rolling hash method: %u (0x%X)\n", pos, validateHash, validateHash, hash, hash);
+//				if (validateHash != hash) exit(1);
 //			#endif
 		}
-		
+
 //		#ifdef SPAM
 //			printf("[GarbageMan] pos: 0x%" PRIu64 "\t%c%c%c\n", pos, text[pos], text[pos+1], text[pos+2]);
 //		#endif
-		
+
 		// Check whether the hash matches the hash of one of the patterns
 		hit = patternBins.equal_range(hash);
 		for (hitIter = hit.first; hitIter != hit.second; hitIter++) {
@@ -192,9 +192,9 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 			bool match = true;
 			uint64_t actualLength = strlen(pattern);	// watch out for \0 byte!!
 			for (uint64_t i=0; i<actualLength && match; i++) {
-				#ifdef DEBUG
-					printf("[charCompare] %X ?= %X\n", (unsigned char) pattern[i], (unsigned char) text[i + pos]);
-				#endif
+//				#ifdef DEBUG
+//					printf("[charCompare] %X ?= %X\n", (unsigned char) pattern[i], (unsigned char) text[i + pos]);
+//				#endif
 				if (i + pos >= fragmentLength) {
 					match = false;
 				}
@@ -202,7 +202,7 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 					match = false;
 				}
 			}
-			
+
 			// lastFoundAddress
 			if (match && (lastFoundAddress == 0 || lastFoundAddress != pos) )
 			{
@@ -229,11 +229,11 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 						job = createJob(hitIter->second, fragmentOffset + pos, globalLength - pos);
 						bbPut(jbuf, job);
 					}
-					
+
 					// Update last found address pointer
 					lastFoundAddress = pos;
 				}
-				
+
 
 			}
 		}
@@ -279,31 +279,31 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	patterns.insert(make_pair(jpgHeader, "\xff\xd8\xff"));	// JPG header ff d8 ff
 	patterns.insert(make_pair(pngHeader, "\x89PNG\x0d\x0a\x1a\x0a"));	// PNG header 89 50 4e 47 0d 0a 1a 0
 	patterns.insert(make_pair(sqliteHeader, "\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x72\x6d\x61\x74\x20\x33\x00"));	// SQLite format 3
-	
+
 	// Resolve path
 	char* realPath = realpath(pathToImg, NULL);
 	if (NULL == realPath) {
 		perror("realpath");
 		return;
 	}
-	
+
 	int fd = open(realPath, O_RDONLY, 0);
 	if(fd == -1)
 	{
 		cerr << "GarbageMan open failed: " << strerror(errno) << endl;
 		return;
 	}
-	
+
 	uint64_t imageSize = getFilesize(realPath, fd);
 	if (0 == imageSize) {
 		cerr << "GarbageMan getFilesize returned 0" << endl;
 		close(fd);
 		return;
 	}
-	
+
 	// We don't need realPath any more
 	free(realPath);
-	
+
 	unsigned int numberOfFragments = ((unsigned int) imageSize/FRAGMENTSIZE);
 	uint64_t defaultFragmentLength = FRAGMENTSIZE;
 	uint64_t fragmentlength = 0;
@@ -330,7 +330,7 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 			fragmentlength = imageSize - currentOffset;
 #ifdef DEBUG
 			cout << dec << "last iteration: fragmentlength : " << fragmentlength << endl; 
-#endif		
+#endif
 			if(fragmentlength==0)
 			{
 				break;
@@ -338,7 +338,7 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 		}
 #ifdef DEBUG
 		cout << dec << "iteration started : " << i << " current fragmentlength : " << fragmentlength << " currentOffset : " << currentOffset << endl;
-#endif 
+#endif
 		char* mmappedData = (char*) mmap(NULL, fragmentlength, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, currentOffset);
 
 		for(unsigned int j=0; j<OVERLAPPINGBOUNDER; j++)
@@ -346,17 +346,17 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 			cache[j]=cache[j+OVERLAPPINGBOUNDER];
 			cache[j+OVERLAPPINGBOUNDER]=mmappedData[fragmentlength - 1 - OVERLAPPINGBOUNDER + j]; 
 		}
-		
+
 		if(i!=0)
 		{
-#ifdef DEBUG 
+#ifdef DEBUG
 			cout << "call rabinKarp for cache" << endl;
 #endif 
 			lastFoundAddress = rabinKarp(cache, patterns, jbuf, 2*OVERLAPPINGBOUNDER, currentOffset-OVERLAPPINGBOUNDER, imageSize, lastFoundAddress);
 		}
 
 		if(mmappedData == MAP_FAILED )
-		{	
+		{
 			if(errno == ENOMEM)
 			{
 				defaultFragmentLength /= 2;
@@ -370,21 +370,21 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 		#ifdef DEBUG
 			cout << "mmapded Data " << hex << &mmappedData << endl; 
 		#endif
-		
+
 		lastFoundAddress = rabinKarp(mmappedData, patterns, jbuf, fragmentlength, currentOffset, imageSize, lastFoundAddress);
-		
+
 		currentOffset = currentOffset + fragmentlength; 
 		#ifdef DEBUG
 			cout << dec << "rabinKarp returned in iteration " << i << " currentOffset : " << currentOffset  << " fragmentlength : " << fragmentlength << endl;
 		#endif
-		
+
 		int ret = munmap(mmappedData, fragmentlength);
 		if (-1 == ret)
-		{	
+		{
 			cerr << "munmap : " << strerror(errno) << std::endl;
 			return ;
 		}
 	}
 
-	close(fd); 
+	close(fd);
 }
