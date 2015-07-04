@@ -8,6 +8,7 @@ Currently *GarbageCollector* can scan disc images as well as devices for files o
 * pdf
 * jpg 
 * png 
+* sqlite
 
 It can recover - unlike other popular file carvers e.g. foremost - **files of any size**. 
 *GarbageCollector* is still a file carver, thus only non-fragmented files can be recovered. Detection is based on format-specific headers and footers regardless of the underlying file system. 
