@@ -81,10 +81,11 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 
 
 
-uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t length, FILE* myImageFile)
+uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t maxLength, FILE* myImageFile)
 {
 	LOG_DEBUG(METHODNAME(getValidFileLength)"Verifying SQLite at 0x%lx of length %ld\n", startOffset, length);
 
+	uint64_t length = maxLength;
 	if (length < 100) {
 		// First 100 bytes correspond to header
 		return 0;
@@ -94,8 +95,13 @@ uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t length,
 		LOG_DEBUG(METHODNAME(verifyHeader)"failed\n");
 		return 0;
 	}
+	// length has now been set by verifyHeader
 
-	// length has been set by verifyHeader method
+	// maxLength points to the end of the image file or device
+	if (length > maxLength) {
+		return 0;
+	}
+
 	return length;
 }
 
