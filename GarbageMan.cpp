@@ -64,31 +64,37 @@ GarbageMan::~GarbageMan()
 {
 }
 
-unsigned int GarbageMan::initialHash(const char* const text, uint64_t length) {
-	unsigned int hash = 0;
+uint64_t GarbageMan::initialHash(const char* const text, uint64_t length) {
+	uint64_t hash = 0;
 	for (uint64_t i=0; i<length; i++) {
-            hash += ((unsigned int) ((unsigned char) text[i])) << (8 * (length - i - 1));
+            hash += ((uint64_t) ((unsigned char) text[i])) << (8 * (length - i - 1));
 //			#ifdef DEBUG
 //				printf("[initialHash] char %c (%X)\t%u (%X)\n", (unsigned char) text[i], (unsigned char) text[i], hash, hash);
 //			#endif
 	}
 	hash = hash % q;
-#ifdef DEBUG
-		printf("[initialHash] %s: %u (0x%X)\n", text, hash, hash);
-#endif
+//#ifdef DEBUG
+//	printf("[initialHash] %s: %" PRIu64 " (0x%" PRIx64 ")\n", text, hash, hash);
+//#endif
 	return hash;
 }
 
-unsigned int GarbageMan::rollingHash(unsigned int previousHash, char kickOut, char next, uint64_t length) {
+uint64_t GarbageMan::rollingHash(uint64_t previousHash, char kickOut, char next, uint64_t length) {
         // See https://www2.cs.fau.de/teaching/SS2015/HalloWelt/ZK_2015.pdf#24
-        unsigned int dump = (((unsigned int) ((unsigned char) kickOut)) << 8 * (length - 1)) % q;
-//		#ifdef DEBUG
-//			printf("[rollingHash] dump %u (%X)\n", dump, dump);
-//		#endif
-        unsigned int hash = ((previousHash - dump) << 8) + (unsigned int) ((unsigned char) next);
-//		#ifdef DEBUG
-//			printf("[rollingHash] new hash %u (%X)\n", hash, hash);
-//		#endif
+        uint64_t dump = (((uint64_t) ((unsigned char) kickOut)) << (8 * (length - 1))) % q;
+//#ifdef DEBUG
+//			printf("[rollingHash] dump %" PRIu64 " (0x%" PRIx64 ")\n", dump, dump);
+//#endif
+        uint64_t hash = (previousHash - dump);
+	if (dump > previousHash) {
+		 // correct for overflow if dump was larger than previousHash
+		 hash = hash + q;
+	}
+	hash = (hash << 8) % q;
+	hash = hash + ((uint64_t) ((unsigned char) next));
+//#ifdef DEBUG
+//			printf("[rollingHash] new hash %" PRIu64 " (0x%" PRIx64")\n", hash, hash);
+//#endif
         hash = hash % q;
 	return hash;
 }
@@ -121,11 +127,13 @@ struct VerificationJob* createJob(PatternType patternType, uint64_t startOffset,
  * Get the maximum number of bytes which we can use for the matching. This number equals the number of bytes of the shortest pattern.
  */
 uint64_t getMaxPatternLength(map<PatternType, const char*> patterns) {
-    uint64_t maxPatternLength = 65535;
-    for (map<PatternType, const char*>::iterator it = patterns.begin(); it != patterns.end(); it++) {
-        maxPatternLength = MIN(maxPatternLength, strlen(it->second));
-    }
-    return maxPatternLength;
+	uint64_t maxPatternLength = 65535;
+	for (map<PatternType, const char*>::iterator it = patterns.begin(); it != patterns.end(); it++) {
+		maxPatternLength = MIN(maxPatternLength, strlen(it->second));
+	}
+	// As we're deailing with 64bit integers, we cannot use more than 8 bytes for comparison
+	// It would be even more efficient if we adapted q here
+	return MIN(8, maxPatternLength);
 }
 
 
@@ -142,18 +150,18 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 	uint64_t patternLength = getMaxPatternLength(patterns);
 
 	// Precalculate hashes of patterns and store them in a hashmap
-	multimap<unsigned int, PatternType> patternBins;
+	multimap<uint64_t, PatternType> patternBins;
 	for (map<PatternType, const char*>::iterator it = patterns.begin(); it != patterns.end(); it++) {
-		unsigned int bin = GarbageMan::initialHash(it->second, patternLength);
+		uint64_t bin = GarbageMan::initialHash(it->second, patternLength);
 		patternBins.insert(make_pair(bin, it->first));
 	}
 
 	uint64_t lastFoundAddress = lastFoundAddressPar - fragmentOffset; // avoid duplicate jobs when seeking in same address space
 
 	bool init = false;
-	unsigned int hash = 0;
-	pair<multimap<unsigned int, PatternType>::iterator, multimap<unsigned int, PatternType>::iterator> hit;
-	multimap<unsigned int, PatternType>::iterator hitIter;
+	uint64_t hash = 0;
+	pair<multimap<uint64_t, PatternType>::iterator, multimap<uint64_t, PatternType>::iterator> hit;
+	multimap<uint64_t, PatternType>::iterator hitIter;
 
 	// Iterate over each byte (interpreted as character) in the text
 	for (uint64_t pos = 0; pos < fragmentLength - patternLength; pos++) {
@@ -163,9 +171,9 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 			init = true;
 		} else {
 			hash = rollingHash(hash, text[pos-1], text[pos + patternLength - 1], patternLength);
-//			#ifdef SPAM
-//				unsigned int validateHash = GarbageMan::initialHash(text + pos, patternLength);
-//				printf("%zx\tInitial hash method: %u (0x%X), Rolling hash method: %u (0x%X)\n", pos, validateHash, validateHash, hash, hash);
+//			#ifdef DEBUG
+//				uint64_t validateHash = GarbageMan::initialHash(text + pos, patternLength);
+//				printf("%zx\tInitial hash method: %" PRIu64 " (0x%" PRIx64 "), Rolling hash method: %" PRIu64" (0x%" PRIx64 ")\n", pos, validateHash, validateHash, hash, hash);
 //				if (validateHash != hash) exit(1);
 //			#endif
 		}
@@ -185,7 +193,7 @@ uint64_t GarbageMan::rabinKarp(const char* const text, map<PatternType, const ch
 
 			#ifdef DEBUG
 				cout << "[GarbageMan] MAYBE Found " << hitIter->second << " at address ";
-				printf("0x%lx \n", (uint64_t) pos + fragmentOffset); 
+				printf("0x%lx \n", (uint64_t) pos + fragmentOffset);
 			#endif
 
 			// Additionally, patterns can be longer than max pattern length. Thus, we need need to compare the pattern's remaining chars
@@ -268,7 +276,7 @@ uint64_t getFilesize(const char* realPath, int fd) {
 			std::cerr << "getFilesize : " << strerror(errno) << std::endl;
 			return 0;
 		}
-		return (uint64_t) st.st_size; 
+		return (uint64_t) st.st_size;
 	}
 }
 

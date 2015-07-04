@@ -62,12 +62,12 @@ class GarbageMan
 {
 	private:
 		std::vector<uint64_t> pdfStart;
-                
-		static unsigned int rollingHash(unsigned int previousHash, char kickOut, char next, uint64_t length);
-		static unsigned int initialHash(const char* const text, uint64_t length);
-		
+
+		static uint64_t rollingHash(uint64_t previousHash, char kickOut, char next, uint64_t length);
+		static uint64_t initialHash(const char* const text, uint64_t length);
+
 		uint64_t rabinKarp(const char* const text, std::map<PatternType, const char*> patterns, BNDBUF* jbuf, uint64_t fragmentLength, uint64_t fragmentOffset, uint64_t globalLength, uint64_t lastFoundAdressPar);
-		static const unsigned int q = 179424673;	// 10 000 000th prime number
+		static const uint64_t q = 179424673;	// 10 000 000th prime number
 
 	public:
 		GarbageMan();
