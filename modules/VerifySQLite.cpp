@@ -59,7 +59,7 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 		return false;
 	}
 	
-	unsigned int pageSize = (unsigned int) buffer[16]) << 4 + (unsigned int) buffer[17];
+	unsigned int pageSize = (((unsigned int) buffer[16]) << 4) + (unsigned int) buffer[17];
 	// From version 3.7.1 a page size of 65536 bytes is encoded as magic 1
 	if (1 == pageSize) {
 		pageSize = 65536;
@@ -72,11 +72,10 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 	}
 
 	// The number of pages consists of 4 bytes in big-endian byte order starting at offset 28
-	unsigned int pages = (unsigned int) buffer[28]) << 12) + ((unsigned int) buffer[29] << 8) + ((unsigned int) buffer[30] << 4) + (unsigned int) buffer[31]);
+	unsigned int pages = (((unsigned int) buffer[28]) << 12) + (((unsigned int) buffer[29]) << 8) + (((unsigned int) buffer[30]) << 4) + ((unsigned int) buffer[31]);
 	// TODO validity check
 
 	length = ((uint64_t) pageSize) * ((uint64_t) pages);
-	
 	return true;
 }
 

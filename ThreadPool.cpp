@@ -89,7 +89,7 @@ void runModules (BNDBUF *jbuf,uint id,char *pathToImage, SewagePlant *swp)
 		VerifyJPEG jpegV;
 		VerifyPDF pdfV;
 		VerifyPNG pngV;
-		VerifySQLite sqliteV
+		VerifySQLite sqliteV;
 		
 		uint64_t foundLength = 0; // error: ‘foundLength’ may be used uninitialized in this function [-Werror=maybe-uninitialized]
 		switch(mj->type) {

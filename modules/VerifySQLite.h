@@ -20,6 +20,7 @@
  */ 
  
 #include "../FileVerifier.h"
+#include "../util.h"
 
 #undef MODULENAME
 #define MODULENAME DEBUGINFO(VerifySQLite,)
@@ -31,7 +32,7 @@ class VerifySQLite	:	FileVerifier
 {
     public:
         VerifySQLite();
-	    ~VerifySQLite();
-	
-	    uint64_t getValidFileLength(uint64_t startOffset, uint64_t length, FILE* myImageFile);
+	~VerifySQLite();
+
+	uint64_t getValidFileLength(uint64_t startOffset, uint64_t length, FILE* myImageFile);
 };

@@ -49,6 +49,8 @@ inline std::ostream& operator<<(std::ostream& out, const PatternType value) {
 			return out << "JPG Header";
 		case pngHeader:
 			return out << "PNG Header";
+		case sqliteHeader:
+			return out << "SQLite Header";
 	}
 	return out;
 }

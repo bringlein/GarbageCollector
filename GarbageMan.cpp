@@ -107,6 +107,9 @@ struct VerificationJob* createJob(PatternType patternType, uint64_t startOffset,
 		case PatternType::jpgHeader:
 			job->type = jpg;
 			break;
+		case PatternType::sqliteHeader:
+			job->type = sqlite;
+			break;
 	}
 	job->startOffset = startOffset;
 	job->length = length;
