@@ -32,14 +32,14 @@ using namespace std;
 
 #define FRAGMENTSIZE (16*1024) 
 
-SewagePlant::SewagePlant(const string pathToOutputFolder, unsigned int initValue, uint64_t imageFileLengt)
+SewagePlant::SewagePlant(const string pathToOutputFolder, unsigned int initValue, uint64_t imageFileLength)
 {
 	this->pathToOutputFolder = pathToOutputFolder;
 	this->pdfCount = initValue;
 	this->pngCount = initValue;
 	this->jpgCount= initValue;
 	this->sqliteCount = initValue;
-	this->imageFileLengt = imageFileLengt;
+	this->imageFileLength = imageFileLength;
 }
 
 SewagePlant::~SewagePlant()
@@ -50,7 +50,7 @@ SewagePlant::~SewagePlant()
 void SewagePlant::purify(uint64_t startOffset, uint64_t realLength, JobType fileType,  FILE * imageFile)
 {
 
-	if((startOffset+realLength)>=imageFileLengt)
+	if ((startOffset+realLength) > imageFileLength)
 	{
 		cerr << "file to purify is bigger then the image/disk" << endl;
 		return;
@@ -59,7 +59,7 @@ void SewagePlant::purify(uint64_t startOffset, uint64_t realLength, JobType file
 	unsigned int fileNumber = 0;
 	string subdir = " ";
 	switch(fileType)
-	{	
+	{
 		case pdf:
 			fileNumber = pdfCount++; 
 			subdir = "pdf";

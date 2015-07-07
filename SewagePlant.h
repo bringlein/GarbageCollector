@@ -34,7 +34,7 @@ class SewagePlant {
 private:
 	std::string pathToOutputFolder;
 	std::atomic<unsigned int> pdfCount, pngCount, jpgCount, sqliteCount; 
-	uint64_t imageFileLengt; 
+	uint64_t imageFileLength; 
 
 public: 
 	SewagePlant(const std::string pathToOutputFolder, unsigned int initValue, uint64_t imageFileLengt);
