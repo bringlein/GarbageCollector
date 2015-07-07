@@ -58,7 +58,7 @@ static unsigned int asUnsignedInt(char* header, unsigned int offset, unsigned in
 }
 
 
-static bool assertEquals(char* header, unsigned int offset, unsigned int size, unsigned int val) {
+static bool assertEquals(char* header, unsigned int offset, unsigned int length, unsigned int val) {
 	unsigned int read = asUnsignedInt(header, offset, length);
 	return (read == val);
 }
