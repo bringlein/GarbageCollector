@@ -71,7 +71,7 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 	}
 
 	char buffer[100];
-	if (0 == fread(buffer, sizeof(unsigned char), 100, myImageFile)) {
+	if (0 == fread(buffer, sizeof(char), 100, myImageFile)) {
 		perror(METHODNAME(verifyHeader)"fread");
 		return false;
 	}
