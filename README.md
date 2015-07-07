@@ -16,7 +16,7 @@ As *GarbageCollector* supports multithreading by design, it is **faster than oth
 
 
 ## Module structure
-![Module structure](https://raw.github.com/btlorch/GarbageCollector/master/structure.png)
+![Module structure](https://raw.githubusercontent.com/cliffTifflor/GarbageCollector/master/structure.png)
 
 
 ## Authors: 
