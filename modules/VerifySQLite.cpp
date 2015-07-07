@@ -48,10 +48,10 @@ static unsigned int asUnsignedInt(char* header, unsigned int offset, unsigned in
 		std::cerr << "[VerifySQLite] method: asUnsignedInt: length must not be longer than 4 bytes" << std::endl;
 	}
 
-	unsigned int val = (unsigned int) header[offset];
+	unsigned int val = (unsigned int) ((unsigned char) header[offset]);
 	for (unsigned int i=1; i<length; i++) {
 		val = val << 8;	// as this is big endian, shift current number by one byte
-		val = val + (unsigned int) header[offset + i];
+		val = val + ((unsigned int) ((unsigned char) header[offset + i]));
 	}
 
 	return val;
@@ -71,7 +71,7 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 	}
 
 	char buffer[100];
-	if (0 == fread(buffer, sizeof(char), 100, myImageFile)) {
+	if (0 == fread(buffer, sizeof(unsigned char), 100, myImageFile)) {
 		perror(METHODNAME(verifyHeader)"fread");
 		return false;
 	}
@@ -86,7 +86,7 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 	unsigned int minorVersion = (version / 1000) % 1000;
 	unsigned int releaseVersion = version % 1000;
 
-	unsigned int pageSize = (((unsigned int) buffer[16]) << 8) + (unsigned int) buffer[17];
+	unsigned int pageSize = asUnsignedInt(buffer, 16, 2);
 	// From version 3.7.1 a page size of 65536 bytes is encoded as magic 1
 	if ((majorVersion > 3 || (majorVersion == 3 && minorVersion > 7) || (majorVersion == 3 && minorVersion == 7 && releaseVersion >= 1)) && 1 == pageSize) {
 		pageSize = 65536;
