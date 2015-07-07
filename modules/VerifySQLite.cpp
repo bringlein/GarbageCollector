@@ -42,6 +42,28 @@ static bool isPowerOfTwo(unsigned int number) {
 }
 
 
+static unsigned int asUnsignedInt(char* header, unsigned int offset, unsigned int length) {
+	// length must not be longer than 4 to match unsigned int
+	if (length > 4) {
+		std::cerr << "[VerifySQLite] method: asUnsignedInt: length must not be longer than 4 bytes" << std::endl;
+	}
+
+	unsigned int val = (unsigned int) header[offset];
+	for (unsigned int i=1; i<length; i++) {
+		val = val << 8;	// as this is big endian, shift current number by one byte
+		val = val + (unsigned int) header[offset + i];
+	}
+
+	return val;
+}
+
+
+static bool assertEquals(char* header, unsigned int offset, unsigned int size, unsigned int val) {
+	unsigned int read = asUnsignedInt(header, offset, length);
+	return (read == val);
+}
+
+
 static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& length) {
 
 	if (fseek(myImageFile, startOffset, SEEK_SET) != 0) {
@@ -59,9 +81,14 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 		return false;
 	}
 
+	unsigned int version = asUnsignedInt(buffer, 96, 4);
+	unsigned int majorVersion = version / 1000000;
+	unsigned int minorVersion = (version / 1000) % 1000;
+	unsigned int releaseVersion = version % 1000;
+
 	unsigned int pageSize = (((unsigned int) buffer[16]) << 8) + (unsigned int) buffer[17];
 	// From version 3.7.1 a page size of 65536 bytes is encoded as magic 1
-	if (1 == pageSize) {
+	if ((majorVersion > 3 || (majorVersion == 3 && minorVersion > 7) || (majorVersion == 3 && minorVersion == 7 && releaseVersion >= 1)) && 1 == pageSize) {
 		pageSize = 65536;
 	}
 	else {
@@ -71,9 +98,38 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 		}
 	}
 
+	// Maximum embedded payload fraction must be 64
+	if (!assertEquals(buffer, 20, 1, 64)) {
+		return false;
+	}
+
+	// Minimum embedded payload fraction must be 32
+	if (!assertEquals(buffer, 21, 1, 32)) {
+		return false;
+	}
+
+	// Leaf payload fraction must be 32
+	if (!assertEquals(buffer, 22, 1, 32)) {
+		return false;
+	}
+
 	// The number of pages consists of 4 bytes in big-endian byte order starting at offset 28
-	unsigned int pages = (((unsigned int) buffer[28]) << 24) + (((unsigned int) buffer[29]) << 16) + (((unsigned int) buffer[30]) << 8) + ((unsigned int) buffer[31]);
-	// TODO validity check
+	unsigned int pages = asUnsignedInt(buffer, 28, 4);
+
+	// In-header database size is always valid when the database is only modified using recent version of SQLite (versions 3.7.0) and later
+	if (majorVersion < 3 || (majorVersion == 3 && minorVersion < 7)) {
+
+		// defined to be non-zero
+		if (0 == pages) {
+			return false;
+		}
+
+		unsigned int changeCounter = asUnsignedInt(buffer, 24, 4);
+		unsigned int versionValidForNumber = asUnsignedInt(buffer, 92, 4);
+		if (changeCounter != versionValidForNumber) {
+			return false;
+		}
+	}
 
 	length = ((uint64_t) pageSize) * ((uint64_t) pages);
 	return true;
@@ -104,4 +160,3 @@ uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t maxLeng
 
 	return length;
 }
-
