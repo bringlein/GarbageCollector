@@ -94,22 +94,26 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 	else {
 		// Otherwise, the page size must be a power of two between 512 and 32768
 		if (pageSize < 512 || pageSize > 32768 || !isPowerOfTwo(pageSize)) {
+			LOG_DEBUG(METHODNAME(verifyHeader)"Page size is smaller than 512, greater than 32768 or not a power of two as expected.\n");
 			return false;
 		}
 	}
 
 	// Maximum embedded payload fraction must be 64
-	if (!assertEquals(buffer, 20, 1, 64)) {
+	if (!assertEquals(buffer, 21, 1, 64)) {
+		LOG_DEBUG(METHODNAME(verifyHeader)"Maximum embedded payload fraction does not match expected value 64.\n");
 		return false;
 	}
 
 	// Minimum embedded payload fraction must be 32
-	if (!assertEquals(buffer, 21, 1, 32)) {
+	if (!assertEquals(buffer, 22, 1, 32)) {
+		LOG_DEBUG(METHODNAME(verifyHeader)"Minimum embedded payload fraction does not match expected value 64.\n");
 		return false;
 	}
 
 	// Leaf payload fraction must be 32
-	if (!assertEquals(buffer, 22, 1, 32)) {
+	if (!assertEquals(buffer, 23, 1, 32)) {
+		LOG_DEBUG(METHODNAME(verifyHeader)"Leaf payload fraction does not match expected value 64.\n");
 		return false;
 	}
 
@@ -121,12 +125,14 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 
 		// defined to be non-zero
 		if (0 == pages) {
+			LOG_DEBUG(METHODNAME(verifyHeader)"Number of pages is defined to be non-zero, but actual value is zero.\n");
 			return false;
 		}
 
 		unsigned int changeCounter = asUnsignedInt(buffer, 24, 4);
 		unsigned int versionValidForNumber = asUnsignedInt(buffer, 92, 4);
 		if (changeCounter != versionValidForNumber) {
+			LOG_DEBUG(METHODNAME(verifyHeader)"Change counter does not match version-for-valid-number.\n");
 			return false;
 		}
 	}
@@ -139,11 +145,12 @@ static bool verifyHeader(uint64_t startOffset, FILE* myImageFile, uint64_t& leng
 
 uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t maxLength, FILE* myImageFile)
 {
-	LOG_DEBUG(METHODNAME(getValidFileLength)"Verifying SQLite at 0x%lx of length %ld\n", startOffset, length);
+	LOG_DEBUG(METHODNAME(getValidFileLength)"Verifying SQLite at 0x%" PRIx64 " of length %" PRIu64 "\n", startOffset, maxLength);
 
 	uint64_t length = maxLength;
 	if (length < 100) {
 		// First 100 bytes correspond to header
+		LOG_DEBUG(METHODNAME(verifyHeader)"Length of SQLite file is shorter than 100 bytes which is the expected header length.\n");
 		return 0;
 	}
 
@@ -155,6 +162,7 @@ uint64_t VerifySQLite::getValidFileLength(uint64_t startOffset, uint64_t maxLeng
 
 	// maxLength points to the end of the image file or device
 	if (length > maxLength) {
+		LOG_DEBUG(METHODNAME(verifyHeader)"The determined length exceeds the end of the image file or device.\n");
 		return 0;
 	}
 
