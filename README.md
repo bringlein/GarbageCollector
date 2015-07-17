@@ -22,7 +22,7 @@ As *GarbageCollector* supports multithreading by design, it is **faster than oth
 ## Authors: 
 ###Team: The Dumpster Divers 
 
-- Lukas Dresel 
+- [Lukas Dresel] (https://github.com/Lukas-Dresel)
 - Julius Lohmann
 - [Benedikt Lorch](https://github.com/btlorch)
 - [Burkhard Ringlein](https://github.com/cliffTifflor)
