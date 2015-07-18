@@ -302,7 +302,7 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	char cache[2*overlap];
 	uint64_t lastFoundAddress = 0;
 
-	// Initialize cache with 
+	// Initialize cache for overlap with zero values
 	fill_n(cache, 2*overlap, 0);
 
 	for(uint64_t i=0; i < (numberOfFragments + 1); i++) {
@@ -337,7 +337,7 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 
 		if(mmappedData == MAP_FAILED) {
 			if(errno == ENOMEM) {
-				// decrease the size of data to map into memory by factor 2 if mmap fails due to insufficient memory
+				// decrease the size of data to be mapped into memory by factor 2 if mmap fails due to insufficient memory
 				defaultFragmentLength /= 2;
 				i=i-1;
 				cerr << "recieved ENOMEM, trying the half" << endl; 
