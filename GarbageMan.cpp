@@ -51,8 +51,7 @@
 #define MIN(a, b) ((a) < (b)) ? (a) : (b)
 #define ALPHABET_SIZE 256	// upper case letters and %
 
-#define FRAGMENTSIZE (500*1024*1024)
-#define OVERLAPPINGBOUNDER 8 //=length of longest search pattern
+#define FRAGMENTSIZE (512*1024*1024)
 
 using namespace std;
 
@@ -260,6 +259,9 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	patterns.insert(make_pair(jpgHeader, "\xff\xd8\xff"));	// JPG header ff d8 ff
 	patterns.insert(make_pair(pngHeader, "\x89PNG\x0d\x0a\x1a\x0a"));	// PNG header 89 50 4e 47 0d 0a 1a 0
 	patterns.insert(make_pair(sqliteHeader, "\x53\x51\x4c\x69\x74\x65\x20\x66\x6f\x72\x6d\x61\x74\x20\x33\x00"));	// SQLite format 3
+	
+	// Find maximum length of patterns
+	uint64_t patternLength = getMaxPatternLength(patterns);
 
 	// Resolve path
 	char* realPath = realpath(pathToImg, NULL);
@@ -285,35 +287,33 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 	// We don't need realPath any more
 	free(realPath);
 
-	unsigned int numberOfFragments = ((unsigned int) imageSize/FRAGMENTSIZE);
+	uint64_t numberOfFragments = (imageSize / (uint64_t) FRAGMENTSIZE);
 	uint64_t defaultFragmentLength = FRAGMENTSIZE;
 	uint64_t fragmentlength = 0;
 	uint64_t currentOffset = 0;
-//	uint64_t OverlappingBytes = 0;
+	uint64_t overlap = patternLength;
 #ifdef DEBUG
 	cout << dec << "image Size: " << imageSize << " numberOfFragments : " << numberOfFragments << endl;
 #endif
 
-	char cache[2*OVERLAPPINGBOUNDER];
+	// As we're dividing the image into fragments, the start of a pattern may occur in the last bytes of one fragment whereas the first bytes of the next fragment mark the end of the pattern
+	// Thus we keep at least the length of the longest possible pattern of the previous fragment in a char buffer and also put the first bytes of the current fragment into that buffer. Then this buffer is additionally examined for patterns.
+	// It may happen that a pattern is matched both in its fragment and in the overlap cache. To compensate for double matches, we keep the address of the previously found pattern and compare it the address of the next match.
+	char cache[2*overlap];
 	uint64_t lastFoundAddress = 0;
 
-	for(unsigned int j=0; j < 2*OVERLAPPINGBOUNDER; j++)
-	{
-		cache[j]=0;
-	}
+	// Initialize cache with 
+	fill_n(cache, 2*overlap, 0);
 
-	for(unsigned int i =0; i < (numberOfFragments + 1); i++)
-	{
-		if(i < numberOfFragments)
-		{
+	for(uint64_t i=0; i < (numberOfFragments + 1); i++) {
+		if(i < numberOfFragments) {
 			fragmentlength = defaultFragmentLength;
 		} else {
 			fragmentlength = imageSize - currentOffset;
 #ifdef DEBUG
 			cout << dec << "last iteration: fragmentlength : " << fragmentlength << endl; 
 #endif
-			if(fragmentlength==0)
-			{
+			if(fragmentlength == 0) {
 				break;
 			}
 		}
@@ -322,24 +322,22 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 #endif
 		char* mmappedData = (char*) mmap(NULL, fragmentlength, PROT_READ, MAP_PRIVATE | MAP_POPULATE, fd, currentOffset);
 
-		for(unsigned int j=0; j<OVERLAPPINGBOUNDER; j++)
-		{
-			cache[j]=cache[j+OVERLAPPINGBOUNDER];
-			cache[j+OVERLAPPINGBOUNDER]=mmappedData[fragmentlength - 1 - OVERLAPPINGBOUNDER + j]; 
+		for(unsigned int j=0; j<overlap; j++) {
+			cache[j] = cache[j + overlap];
+			cache[j + overlap] = mmappedData[fragmentlength - 1 - overlap + j]; 
 		}
 
-		if(i!=0)
-		{
+		if(i != 0) {
+			// Additionally seek for matches in overlap
 #ifdef DEBUG
-			cout << "call rabinKarp for cache" << endl;
+			cout << "call rabinKarp on cache" << endl;
 #endif 
-			lastFoundAddress = rabinKarp(cache, patterns, jbuf, 2*OVERLAPPINGBOUNDER, currentOffset-OVERLAPPINGBOUNDER, imageSize, lastFoundAddress);
+			lastFoundAddress = rabinKarp(cache, patterns, jbuf, 2*overlap, currentOffset-overlap, imageSize, lastFoundAddress);
 		}
 
-		if(mmappedData == MAP_FAILED )
-		{
-			if(errno == ENOMEM)
-			{
+		if(mmappedData == MAP_FAILED) {
+			if(errno == ENOMEM) {
+				// decrease the size of data to map into memory by factor 2 if mmap fails due to insufficient memory
 				defaultFragmentLength /= 2;
 				i=i-1;
 				cerr << "recieved ENOMEM, trying the half" << endl; 
@@ -359,9 +357,9 @@ void GarbageMan::work(const char* pathToImg, BNDBUF* jbuf) {
 			cout << dec << "rabinKarp returned in iteration " << i << " currentOffset : " << currentOffset  << " fragmentlength : " << fragmentlength << endl;
 		#endif
 
+		// Unmap mapping for specified address range
 		int ret = munmap(mmappedData, fragmentlength);
-		if (-1 == ret)
-		{
+		if (-1 == ret) {
 			cerr << "munmap : " << strerror(errno) << std::endl;
 			return ;
 		}
